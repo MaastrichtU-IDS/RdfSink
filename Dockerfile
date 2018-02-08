@@ -11,7 +11,7 @@ COPY . .
 
 RUN mvn clean install && \
     mkdir $APP_DIR && \
-    mv target/RdfUploadService-0.0.1-SNAPSHOT-jar-with-dependencies.jar $APP_DIR/RdfUploadService.jar && \
+    mv target/RdfUploadService-0.0.1-SNAPSHOT.jar $APP_DIR/RdfUploadService.jar && \
     rm -rf $TMP_DIR
 
 WORKDIR $APP_DIR
