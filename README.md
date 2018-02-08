@@ -20,7 +20,7 @@ docker run \
   -p 80:80 \
   -e ENDPOINT=<your sparql endpoint> \
   [-e UPDATE_ENDPOINT=<optional if you have an additional endpoint for updates> \]
-  [-e USERNAME=<username for authentication against ENDPOINT or UPDATE_ENDPOINT> \
-   -e PASSWORD=<password for authentication against ENDPOINT or UPDATE_ENDPOINT> \]
+  [-e USERNAME=<username for authentication against ENDPOINT and/or UPDATE_ENDPOINT> \
+   -e PASSWORD=<password for authentication against ENDPOINT and/or UPDATE_ENDPOINT> \]
   rdf-upload-service 
 ```
