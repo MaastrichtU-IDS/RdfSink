@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.exec.environment.EnvironmentUtils;
+import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.repository.util.RDFInserter;
@@ -96,13 +97,13 @@ public class RdfUploadService {
 				});
 
 			} catch (Exception e2) {
-				req.response().setStatusCode(400)
+				req.response().setStatusCode(HttpStatus.SC_BAD_REQUEST)
 					.setStatusMessage(Arrays.toString(e2.getStackTrace()))
 					.end();
 			}
 
 		req.response()
-			.setStatusCode(200)
+			.setStatusCode(HttpStatus.SC_OK)
 			.end();
 
 		}).listen(80);
