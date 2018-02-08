@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -37,7 +38,7 @@ public class RdfUploadService {
 		}
 	}
 
-	void run() throws IOException {
+	private void run() throws IOException {
 		Map<String, String> env = EnvironmentUtils.getProcEnvironment();
 		final String endpoint = env.get(ENDPOINT_KEY);
 		final String updateEndpoint = env.get(UPDATE_ENDPOINT_KEY);
@@ -53,27 +54,22 @@ public class RdfUploadService {
 		System.out.println("Server listening on port 80");
 
 		httpServer.requestHandler(req -> {
-//			System.out.println(req.uri());
-//			System.out.println(req.method());
-			req.headers().forEach(h -> {
-				System.out.println(h.getKey() + "=" + h.getValue());
-			});
-
 			try {
-				req.setExpectMultipart(false);
+				req.setExpectMultipart(true);
 				final StringBuilder payload = new StringBuilder();
 				req.handler(data -> {
 					payload.append(data.toString());
 				});
-				System.out.println("Payload:" + payload.toString());
 
 				req.endHandler(handler -> {
-					String acceptHeader = req.headers().get(HttpHeaders.CONTENT_TYPE);
-					RDFFormat rdfFormat = RDFFormat.NQUADS; //Rio.getParserFormatForMIMEType(acceptHeader).orElse(null);
-					if(rdfFormat == null)
-						throw new UnsupportedOperationException("Unable to handle Accept-Type: " + acceptHeader);
 
-					RDFParser parser = Rio.createParser(rdfFormat);
+					String contentType = req.headers().get(HttpHeaders.CONTENT_TYPE);
+
+					Optional<RDFFormat> rdfFormat = Rio.getParserFormatForMIMEType(contentType);
+					if(!rdfFormat.isPresent())
+						throw new UnsupportedOperationException("Unable to handle Accept-Type: \"" + contentType + "\"");
+
+					RDFParser parser = Rio.createParser(rdfFormat.orElse(RDFFormat.TRIG));
 					StatementCollector collector = new StatementCollector();
 					parser.setRDFHandler(collector);
 					try {
@@ -85,8 +81,8 @@ public class RdfUploadService {
 					}
 
 					SPARQLRepository repo = updateEndpoint == null
-							? new SPARQLRepository(endpoint)
-							: new SPARQLRepository(endpoint, updateEndpoint);
+						? new SPARQLRepository(endpoint)
+						: new SPARQLRepository(endpoint, updateEndpoint);
 					if(username != null && password!=null && !username.isEmpty() && !password.isEmpty())
 						repo.setUsernameAndPassword(username, password);
 					repo.initialize();
@@ -110,18 +106,19 @@ public class RdfUploadService {
 		req.response()
 			.setStatusCode(200)
 			.end();
+
 		}).listen(80);
 	}
 
 	private static void usage() {
 		System.out.println("\n Usage of RdfUploadService"
-				+ "\n   Please set following environment variables"
-				+ "\n     Mandatory:"
-				+ "\n       " + ENDPOINT_KEY
-				+ "\n     Optional:"
-				+ "\n       " + UPDATE_ENDPOINT_KEY
-				+ "\n       " + USERNAME_KEY
-				+ "\n       " + PASSWORD_KEY);
+			+ "\n   Please set following environment variables"
+			+ "\n     Mandatory:"
+			+ "\n       " + ENDPOINT_KEY
+			+ "\n     Optional:"
+			+ "\n       " + UPDATE_ENDPOINT_KEY
+			+ "\n       " + USERNAME_KEY
+			+ "\n       " + PASSWORD_KEY);
 	}
 
 }
