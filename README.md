@@ -10,7 +10,7 @@ docker build -t rdf-upload-service .
 ```
 ## Usage
 ```
-docker run rdf-upload-service
+docker run --rm rdf-upload-service
 ```
 ## Run
 ```
