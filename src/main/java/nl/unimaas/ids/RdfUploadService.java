@@ -1,5 +1,6 @@
 package nl.unimaas.ids;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
@@ -7,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.exec.environment.EnvironmentUtils;
+import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.repository.util.RDFInserter;
@@ -16,6 +18,9 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+
+import com.eclipsesource.json.JsonArray;
+import com.squareup.tape.QueueFile;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
@@ -51,10 +56,38 @@ public class RdfUploadService {
 		Vertx vertx = new VertxFactoryImpl().vertx();
 		HttpServer httpServer = vertx.createHttpServer();
 
+		File queueFile = new File("/data/nanopubs.queue");
+
+		queueFile.getParentFile().mkdirs();
+
+		final QueueFile queue = new QueueFile(queueFile);
+		SparqlEndpointWriterThread rdfwriter = new SparqlEndpointWriterThread(queue, endpoint, updateEndpoint, username, password);
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				rdfwriter.terminate();
+				try {
+					rdfwriter.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				try {
+					queue.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		rdfwriter.start();
+
 		System.out.println("Server listening on port 80");
 
 		httpServer.requestHandler(req -> {
 			try {
+				String contentType = req.headers().get(HttpHeaders.CONTENT_TYPE);
+
 				req.setExpectMultipart(true);
 				final StringBuilder payload = new StringBuilder();
 				req.handler(data -> {
@@ -62,53 +95,30 @@ public class RdfUploadService {
 				});
 
 				req.endHandler(handler -> {
-
-					String contentType = req.headers().get(HttpHeaders.CONTENT_TYPE);
-
-					Optional<RDFFormat> rdfFormat = Rio.getParserFormatForMIMEType(contentType);
-					if(!rdfFormat.isPresent())
+					if(!Rio.getParserFormatForMIMEType(contentType).isPresent())
 						throw new UnsupportedOperationException("Unable to handle Accept-Type: \"" + contentType + "\"");
-
-					RDFParser parser = Rio.createParser(rdfFormat.orElse(RDFFormat.TRIG));
-					StatementCollector collector = new StatementCollector();
-					parser.setRDFHandler(collector);
 					try {
-						parser.parse(new StringReader(payload.toString()), "");
-					} catch (RDFParseException | RDFHandlerException | IOException e) {
-						e.printStackTrace();
-						usage();
-						System.exit(1);
-					}
-
-					SPARQLRepository repo = updateEndpoint == null
-						? new SPARQLRepository(endpoint)
-						: new SPARQLRepository(endpoint, updateEndpoint);
-					if(username != null && password!=null && !username.isEmpty() && !password.isEmpty())
-						repo.setUsernameAndPassword(username, password);
-					repo.initialize();
-
-					try(RepositoryConnection conn = repo.getConnection()) {
-						RDFInserter inserter = new RDFInserter(conn);
-						inserter.startRDF();
-						collector.getStatements().forEach(statement -> {
-							inserter.handleStatement(statement);
-						});
-						inserter.endRDF();
+						queue.add(new JsonArray().add(contentType).add(payload.toString()).toString().getBytes());
+//						System.out.println("ADDED");
+					} catch (IOException e1) {
+						throw new UnsupportedOperationException("Unable to add new entry to queue", e1);
 					}
 				});
 
 			} catch (Exception e2) {
-				req.response().setStatusCode(400)
+				req.response().setStatusCode(HttpStatus.SC_BAD_REQUEST)
 					.setStatusMessage(Arrays.toString(e2.getStackTrace()))
 					.end();
 			}
 
 		req.response()
-			.setStatusCode(200)
+			.setStatusCode(HttpStatus.SC_OK)
 			.end();
 
 		}).listen(80);
 	}
+
+
 
 	private static void usage() {
 		System.out.println("\n Usage of RdfUploadService"
