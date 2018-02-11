@@ -58,31 +58,31 @@ class SparqlEndpointWriterThread extends Thread {
 
 					SPARQLRepository repo = updateEndpoint == null
 							? new SPARQLRepository(endpoint)
-									: new SPARQLRepository(endpoint, updateEndpoint);
-							if (username != null && password != null && !username.isEmpty() && !password.isEmpty())
-								repo.setUsernameAndPassword(username, password);
-							repo.initialize();
+							: new SPARQLRepository(endpoint, updateEndpoint);
+					if (username != null && password != null && !username.isEmpty() && !password.isEmpty())
+						repo.setUsernameAndPassword(username, password);
+					repo.initialize();
 
-							RDFParser parser = Rio.createParser(rdfFormat);
-							StatementCollector collector = new StatementCollector();
-							parser.setRDFHandler(collector);
-							try {
-								parser.parse(new StringReader(payload.toString()), "");
+					RDFParser parser = Rio.createParser(rdfFormat);
+					StatementCollector collector = new StatementCollector();
+					parser.setRDFHandler(collector);
+					try {
+						parser.parse(new StringReader(payload.toString()), "");
 
-								try (RepositoryConnection conn = repo.getConnection()) {
-									RDFInserter inserter = new RDFInserter(conn);
-									inserter.startRDF();
-									collector.getStatements().forEach(statement -> {
-										inserter.handleStatement(statement);
-									});
-									inserter.endRDF();
-								}
-							} catch (RDFParseException | RDFHandlerException | IOException e) {
-								e.printStackTrace();
-							}
+						try (RepositoryConnection conn = repo.getConnection()) {
+							RDFInserter inserter = new RDFInserter(conn);
+							inserter.startRDF();
+							collector.getStatements().forEach(statement -> {
+								inserter.handleStatement(statement);
+							});
+							inserter.endRDF();
+						}
+					} catch (RDFParseException | RDFHandlerException | IOException e) {
+						e.printStackTrace();
+					}
 
-							repo.shutDown();
-							queue.remove();
+					repo.shutDown();
+					queue.remove();
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
