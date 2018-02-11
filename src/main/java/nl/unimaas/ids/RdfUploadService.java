@@ -1,31 +1,18 @@
 package nl.unimaas.ids;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.http.HttpStatus;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
-import org.eclipse.rdf4j.repository.util.RDFInserter;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-
-import com.eclipsesource.json.JsonArray;
-import com.squareup.tape.QueueFile;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.impl.VertxFactoryImpl;
+import io.vertx.core.json.JsonArray;
 
 public class RdfUploadService {
 
@@ -56,11 +43,11 @@ public class RdfUploadService {
 		Vertx vertx = new VertxFactoryImpl().vertx();
 		HttpServer httpServer = vertx.createHttpServer();
 
-		File queueFile = new File("/data/nanopubs.queue");
+//		File queueFile = new File("/data/nanopubs.queue");
 
-		queueFile.getParentFile().mkdirs();
+//		queueFile.getParentFile().mkdirs();
 
-		final QueueFile queue = new QueueFile(queueFile);
+		final Queue queue = new Queue("/data/", "nanopubs", 1000);
 		SparqlEndpointWriterThread rdfwriter = new SparqlEndpointWriterThread(queue, endpoint, updateEndpoint, username, password);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -72,12 +59,7 @@ public class RdfUploadService {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				try {
-					queue.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				queue.close();
 			}
 		});
 		rdfwriter.start();
@@ -98,7 +80,7 @@ public class RdfUploadService {
 					if(!Rio.getParserFormatForMIMEType(contentType).isPresent())
 						throw new UnsupportedOperationException("Unable to handle Accept-Type: \"" + contentType + "\"");
 					try {
-						queue.add(new JsonArray().add(contentType).add(payload.toString()).toString().getBytes());
+						queue.push(new JsonArray().add(contentType).add(payload.toString()).toString());
 //						System.out.println("ADDED");
 					} catch (IOException e1) {
 						throw new UnsupportedOperationException("Unable to add new entry to queue", e1);

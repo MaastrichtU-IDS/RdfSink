@@ -15,10 +15,10 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
-import com.squareup.tape.QueueFile;
+
 
 class SparqlEndpointWriterThread extends Thread {
-	QueueFile queue = null;
+	Queue queue = null;
 	String endpoint = null;
 	String updateEndpoint = null;
 	String username = null;
@@ -32,7 +32,7 @@ class SparqlEndpointWriterThread extends Thread {
 
 
 
-	public SparqlEndpointWriterThread(QueueFile queue, String endpoint, String updateEndpoint, String username,
+	public SparqlEndpointWriterThread(Queue queue, String endpoint, String updateEndpoint, String username,
 			String password) {
 		this.queue = queue;
 		this.endpoint = endpoint;
@@ -46,7 +46,7 @@ class SparqlEndpointWriterThread extends Thread {
 		while(!terminated) {
 			try {
 				if (!queue.isEmpty()) {
-					String queueEntry = new String(queue.peek());
+					String queueEntry = queue.poll();
 
 					JsonArray arr = Json.parse(queueEntry).asArray();
 					String contentType = arr.get(0).asString();
@@ -82,7 +82,6 @@ class SparqlEndpointWriterThread extends Thread {
 					}
 
 					repo.shutDown();
-					queue.remove();
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
