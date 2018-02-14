@@ -2,9 +2,7 @@ package nl.unimaas.ids;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.Comparator;
 
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
@@ -13,27 +11,6 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
-
-@SuppressWarnings("serial")
-class KeyComparator implements Comparator, Serializable {
-
-    /**
-     * Compares two DB keys.
-     *
-     * @param key1 first key
-     * @param key2 second key
-     *
-     * @return comparison result
-     */
-    public int compare(byte[] key1, byte[] key2) {
-        return new BigInteger(key1).compareTo(new BigInteger(key2));
-    }
-
-	@Override
-	public int compare(Object o1, Object o2) {
-		return compare((byte[]) o1, (byte[]) o2);
-	}
-}
 
 /**
  * Fast queue implementation on top of Berkley DB Java Edition.

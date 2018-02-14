@@ -11,11 +11,11 @@ COPY . .
 
 RUN mvn clean install && \
     mkdir $APP_DIR && \
-    mv target/RdfUploadService-0.0.1-SNAPSHOT.jar $APP_DIR/RdfUploadService.jar && \
+    mv target/RdfSink-0.9.0.jar $APP_DIR/RdfSink.jar && \
     rm -rf $TMP_DIR
 
 WORKDIR $APP_DIR
 
 EXPOSE 80
 
-ENTRYPOINT ["java","-jar","RdfUploadService.jar"]
+ENTRYPOINT ["java","-jar","RdfSink.jar"]

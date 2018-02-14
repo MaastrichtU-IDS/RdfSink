@@ -14,7 +14,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.impl.VertxFactoryImpl;
 import io.vertx.core.json.JsonArray;
 
-public class RdfUploadService {
+public class RdfSink {
 
 	static final String ENDPOINT_KEY = "ENDPOINT";
 	static final String UPDATE_ENDPOINT_KEY = "UPDATE_ENDPOINT";
@@ -23,7 +23,7 @@ public class RdfUploadService {
 
 	public static void main(String[] args) {
 		try {
-			new RdfUploadService().run();
+			new RdfSink().run();
 		} catch (Exception e) {
 			e.printStackTrace();
 			usage();
@@ -103,7 +103,7 @@ public class RdfUploadService {
 
 
 	private static void usage() {
-		System.out.println("\n Usage of RdfUploadService"
+		System.out.println("\n Usage of RdfSink"
 			+ "\n   Please set following environment variables"
 			+ "\n     Mandatory:"
 			+ "\n       " + ENDPOINT_KEY
