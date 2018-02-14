@@ -48,7 +48,7 @@ public class RdfSink {
 //		queueFile.getParentFile().mkdirs();
 
 		final Queue queue = new Queue("/data/", "nanopubs", 1000);
-		SparqlEndpointWriterThread rdfwriter = new SparqlEndpointWriterThread(queue, endpoint, updateEndpoint, username, password);
+		SparqlEndpointThread rdfwriter = new SparqlEndpointThread(queue, endpoint, updateEndpoint, username, password);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {

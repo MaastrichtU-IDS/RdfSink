@@ -17,12 +17,13 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 
 
-class SparqlEndpointWriterThread extends Thread {
-	Queue queue = null;
-	String endpoint = null;
-	String updateEndpoint = null;
-	String username = null;
-	String password = null;
+class SparqlEndpointThread extends Thread {
+	private Queue queue = null;
+	private String endpoint = null;
+	private String updateEndpoint = null;
+	private String username = null;
+	private String password = null;
+	private SPARQLRepository repository;
 
 	volatile boolean terminated = false;
 
@@ -32,8 +33,7 @@ class SparqlEndpointWriterThread extends Thread {
 
 
 
-	public SparqlEndpointWriterThread(Queue queue, String endpoint, String updateEndpoint, String username,
-			String password) {
+	public SparqlEndpointThread(Queue queue, String endpoint, String updateEndpoint, String username, String password) {
 		this.queue = queue;
 		this.endpoint = endpoint;
 		this.updateEndpoint = updateEndpoint;
@@ -43,6 +43,7 @@ class SparqlEndpointWriterThread extends Thread {
 
 	@Override
 	public void run() {
+		SPARQLRepository repo = null;
 		while(!terminated) {
 			try {
 				if (!queue.isEmpty()) {
@@ -52,17 +53,11 @@ class SparqlEndpointWriterThread extends Thread {
 					String contentType = arr.get(0).asString();
 					String payload = arr.get(1).asString();
 
-//					System.out.println("\n\nContent-Type: " + contentType + "\n" + payload + "\n");
+//					System.err.println("\n\nContent-Type: " + contentType + "\n" + payload + "\n");
+
+					repo = getRepository();
 
 					RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(contentType).get();
-
-					SPARQLRepository repo = updateEndpoint == null
-							? new SPARQLRepository(endpoint)
-							: new SPARQLRepository(endpoint, updateEndpoint);
-					if (username != null && password != null && !username.isEmpty() && !password.isEmpty())
-						repo.setUsernameAndPassword(username, password);
-					repo.initialize();
-
 					RDFParser parser = Rio.createParser(rdfFormat);
 					StatementCollector collector = new StatementCollector();
 					parser.setRDFHandler(collector);
@@ -81,16 +76,25 @@ class SparqlEndpointWriterThread extends Thread {
 						e.printStackTrace();
 					}
 
-					repo.shutDown();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			try {
-				sleep(10);
-			} catch (InterruptedException e) {
+				} else
+					sleep(100);
+			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
+		if(repo != null && repo.isInitialized())
+			repo.shutDown();
+	}
+
+	private SPARQLRepository getRepository() {
+		if(repository == null || !repository.isInitialized()) {
+			repository = updateEndpoint == null
+					? new SPARQLRepository(endpoint)
+					: new SPARQLRepository(endpoint, updateEndpoint);
+			if (username != null && password != null && !username.isEmpty() && !password.isEmpty())
+				repository.setUsernameAndPassword(username, password);
+			repository.initialize();
+		}
+		return repository;
 	}
 }

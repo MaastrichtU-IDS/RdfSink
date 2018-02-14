@@ -44,6 +44,7 @@ public class Queue {
      * Queue operation counter, which is used to sync the queue database to disk periodically.
      */
     private int opsCounter;
+    private long size;
 
     /**
      * Creates instance of persistent queue.
@@ -52,9 +53,7 @@ public class Queue {
      * @param queueName      descriptive queue name
      * @param cacheSize      how often to sync the queue to disk
      */
-    public Queue(final String queueEnvPath,
-                 final String queueName,
-                 final int cacheSize) {
+    public Queue(final String queueEnvPath, final String queueName, final int cacheSize) {
         // Create parent dirs for queue environment directory
         new File(queueEnvPath).mkdirs();
 
@@ -62,8 +61,7 @@ public class Queue {
         final EnvironmentConfig dbEnvConfig = new EnvironmentConfig();
         dbEnvConfig.setTransactional(false);
         dbEnvConfig.setAllowCreate(true);
-        this.dbEnv = new Environment(new File(queueEnvPath),
-                                  dbEnvConfig);
+        this.dbEnv = new Environment(new File(queueEnvPath), dbEnvConfig);
 
         // Setup non-transactional deferred-write queue database
         DatabaseConfig dbConfig = new DatabaseConfig();
@@ -71,12 +69,11 @@ public class Queue {
         dbConfig.setAllowCreate(true);
         dbConfig.setDeferredWrite(true);
         dbConfig.setBtreeComparator(new KeyComparator());
-        this.queueDatabase = dbEnv.openDatabase(null,
-            queueName,
-            dbConfig);
+        this.queueDatabase = dbEnv.openDatabase(null, queueName, dbConfig);
         this.queueName = queueName;
         this.cacheSize = cacheSize;
         this.opsCounter = 0;
+        this.size = size();
     }
 
     /**
@@ -97,6 +94,7 @@ public class Queue {
             final String res = new String(data.getData(), "UTF-8");
             cursor.delete();
             opsCounter++;
+            size--;
             if (opsCounter >= cacheSize) {
                 queueDatabase.sync();
                 opsCounter = 0;
@@ -137,6 +135,7 @@ public class Queue {
                 queueDatabase.put(null, newKey, newData);
 
                 opsCounter++;
+                size++;
                 if (opsCounter >= cacheSize) {
                     queueDatabase.sync();
                     opsCounter = 0;
@@ -176,6 +175,6 @@ public class Queue {
     }
 
 	public boolean isEmpty() {
-		return size()==0L;
+		return size==0L;
 	}
 }
