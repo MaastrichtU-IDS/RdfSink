@@ -57,7 +57,7 @@ class SparqlEndpointThread extends Thread {
 
 					RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(contentType).get();
 					try {
-						repo.getConnection().add(new StringReader(payload.toString()), null, rdfFormat);
+						repo.getConnection().add(new StringReader(payload.toString()), "http://null/", rdfFormat);
 					} catch (RDFParseException | IOException | RepositoryException e ) {
 						e.printStackTrace();
 					}
