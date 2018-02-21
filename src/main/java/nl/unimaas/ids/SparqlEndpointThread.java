@@ -3,11 +3,9 @@ package nl.unimaas.ids;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
-import org.eclipse.rdf4j.repository.util.RDFInserter;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
@@ -58,21 +56,9 @@ class SparqlEndpointThread extends Thread {
 					repo = getRepository();
 
 					RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(contentType).get();
-					RDFParser parser = Rio.createParser(rdfFormat);
-					StatementCollector collector = new StatementCollector();
-					parser.setRDFHandler(collector);
 					try {
-						parser.parse(new StringReader(payload.toString()), "");
-
-						try (RepositoryConnection conn = repo.getConnection()) {
-							RDFInserter inserter = new RDFInserter(conn);
-							inserter.startRDF();
-							collector.getStatements().forEach(statement -> {
-								inserter.handleStatement(statement);
-							});
-							inserter.endRDF();
-						}
-					} catch (RDFParseException | RDFHandlerException | IOException e) {
+						repo.getConnection().add(new StringReader(payload.toString()), null, rdfFormat);
+					} catch (RDFParseException | IOException | RepositoryException e ) {
 						e.printStackTrace();
 					}
 
