@@ -7,9 +7,7 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
@@ -51,14 +49,14 @@ class SparqlEndpointThread extends Thread {
 					String contentType = arr.get(0).asString();
 					String payload = arr.get(1).asString();
 
-//					System.err.println("\n\nContent-Type: " + contentType + "\n" + payload + "\n");
-
 					repo = getRepository();
 
 					RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(contentType).get();
 					try {
-						repo.getConnection().add(new StringReader(payload.toString()), "http://null/", rdfFormat);
+						repo.getConnection().add(new StringReader(payload), "http://null/", rdfFormat);
 					} catch (RDFParseException | IOException | RepositoryException e ) {
+						// add item to end of queue if something went wrong
+						queue.push(queueEntry);
 						e.printStackTrace();
 					}
 

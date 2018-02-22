@@ -43,10 +43,6 @@ public class RdfSink {
 		Vertx vertx = new VertxFactoryImpl().vertx();
 		HttpServer httpServer = vertx.createHttpServer();
 
-//		File queueFile = new File("/data/nanopubs.queue");
-
-//		queueFile.getParentFile().mkdirs();
-
 		final Queue queue = new Queue("/data/", "nanopubs", 1000);
 		SparqlEndpointThread rdfwriter = new SparqlEndpointThread(queue, endpoint, updateEndpoint, username, password);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -81,7 +77,6 @@ public class RdfSink {
 						throw new UnsupportedOperationException("Unable to handle Accept-Type: \"" + contentType + "\"");
 					try {
 						queue.push(new JsonArray().add(contentType).add(payload.toString()).toString());
-//						System.out.println("ADDED");
 					} catch (IOException e1) {
 						throw new UnsupportedOperationException("Unable to add new entry to queue", e1);
 					}
