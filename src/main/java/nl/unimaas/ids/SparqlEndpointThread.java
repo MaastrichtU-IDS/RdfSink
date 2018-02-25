@@ -55,13 +55,15 @@ class SparqlEndpointThread extends Thread {
 					try {
 						repo.getConnection().add(new StringReader(payload), "http://null/", rdfFormat);
 					} catch (RDFParseException | IOException | RepositoryException e ) {
-						// add item to end of queue if something went wrong
+						// add item to end of queue if something went wrong and wait 5s
 						queue.push(queueEntry);
 						e.printStackTrace();
+						sleep(5000);
 					}
 
 				} else
-					sleep(100);
+					// nothing to do, let's wait a second
+					sleep(1000);
 			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
