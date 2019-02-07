@@ -3,6 +3,7 @@ package nl.unimaas.ids;
 import java.io.IOException;
 import java.io.StringReader;
 
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -51,14 +52,17 @@ class SparqlEndpointThread extends Thread {
 
 					repo = getRepository();
 
+					RepositoryConnection conn = repo.getConnection();
 					RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(contentType).get();
 					try {
-						repo.getConnection().add(new StringReader(payload), "http://null/", rdfFormat);
+						conn.add(new StringReader(payload), "http://null/", rdfFormat);
 					} catch (RDFParseException | IOException | RepositoryException e ) {
 						// add item to end of queue if something went wrong and wait 5s
 						queue.push(queueEntry);
 						e.printStackTrace();
 						sleep(5000);
+					} finally {
+						conn.close();
 					}
 
 				} else
