@@ -9,6 +9,16 @@ WORKDIR $TMP_DIR
 
 COPY . .
 
+# This can be removed once the latest version is on Maven Central:
+RUN git clone https://github.com/trustyuri/trustyuri-java.git && \
+    cd trustyuri-java && \
+    mvn clean install -Dmaven.test.skip=true
+
+# This can be removed once the latest version is on Maven Central:
+RUN git clone https://github.com/Nanopublication/nanopub-java.git && \
+    cd nanopub-java && \
+    mvn clean install -Dmaven.test.skip=true
+
 RUN mvn clean install && \
     mkdir $APP_DIR && \
     mv target/RdfSink-0.9.0.jar $APP_DIR/RdfSink.jar && \

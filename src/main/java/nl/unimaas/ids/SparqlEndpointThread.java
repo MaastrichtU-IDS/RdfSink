@@ -78,7 +78,7 @@ class SparqlEndpointThread extends Thread {
 	}
 
 	private void process(String payload, RDFFormat format) throws RDF4JException, IOException {
-		RepositoryConnection conn = repository.getConnection();
+		RepositoryConnection conn = getRepository().getConnection();
 		try {
 			if (module.equals("nanopub")) {
 				NanopubModule.process(conn, payload, format);
