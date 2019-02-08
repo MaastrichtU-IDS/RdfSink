@@ -20,6 +20,7 @@ public class RdfSink {
 	static final String UPDATE_ENDPOINT_KEY = "UPDATE_ENDPOINT";
 	static final String USERNAME_KEY = "USERNAME";
 	static final String PASSWORD_KEY = "PASSWORD";
+	static final String MODULE_KEY = "MODULE";
 
 	public static void main(String[] args) {
 		try {
@@ -36,6 +37,7 @@ public class RdfSink {
 		final String updateEndpoint = env.get(UPDATE_ENDPOINT_KEY);
 		final String username = env.get(USERNAME_KEY);
 		final String password = env.get(PASSWORD_KEY);
+		final String module = env.get(MODULE_KEY);
 
 		if(endpoint == null || endpoint.isEmpty())
 			throw new IllegalArgumentException();
@@ -43,8 +45,8 @@ public class RdfSink {
 		Vertx vertx = new VertxFactoryImpl().vertx();
 		HttpServer httpServer = vertx.createHttpServer();
 
-		final Queue queue = new Queue("/data/", "nanopubs", 1000);
-		SparqlEndpointThread rdfwriter = new SparqlEndpointThread(queue, endpoint, updateEndpoint, username, password);
+		final Queue queue = new Queue("/data/", "rdfsink queue", 1000);
+		SparqlEndpointThread rdfwriter = new SparqlEndpointThread(queue, endpoint, updateEndpoint, username, password, module);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
