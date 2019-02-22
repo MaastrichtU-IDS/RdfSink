@@ -13,6 +13,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.nanopub.MalformedNanopubException;
@@ -44,9 +45,9 @@ public class NanopubModule {
 			} catch (GeneralSecurityException | MalformedCryptoElementException ex) {}
 			Calendar timestamp = SimpleTimestampPattern.getCreationTime(np);
 			if (timestamp != null) {
-				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral(getDayString(timestamp)), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral(getMonthString(timestamp)), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral(getYearString(timestamp)), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral(getDayString(timestamp), XMLSchema.DATE), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral(getMonthString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral(getYearString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
 			}
 			conn.add(st);
 		} catch (MalformedNanopubException e) {
@@ -55,13 +56,13 @@ public class NanopubModule {
 	}
 
 	private static String getDayString(Calendar c) {
-		SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		df.setTimeZone(timeZone);
 		return df.format(c.getTime());
 	}
 
 	private static String getMonthString(Calendar c) {
-		SimpleDateFormat df = new SimpleDateFormat("yyyyMM");
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM");
 		df.setTimeZone(timeZone);
 		return df.format(c.getTime());
 	}
