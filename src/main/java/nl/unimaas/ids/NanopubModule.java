@@ -32,6 +32,12 @@ public class NanopubModule {
 
 	public static void process(RepositoryConnection conn, String payload, RDFFormat format) throws RDF4JException {
 		try {
+			boolean containsNullCharacter = false;
+			if (payload.contains("\0")) {
+				// Work-around because null characters cause problems
+				containsNullCharacter = true;
+				payload = payload.replaceAll("\0", "");
+			}
 			Nanopub np = new NanopubImpl(payload, format);
 			// TODO: check that nanopub doesn't use admin namespace
 			List<Statement> st = new ArrayList<>();
@@ -43,15 +49,27 @@ public class NanopubModule {
 					st.add(vf.createStatement(np.getUri(), HAS_VALID_SIGNATURE_FOR_PUBLIC_KEY, vf.createLiteral(el.getPublicKeyString()), ADMIN_GRAPH));
 				}
 			} catch (GeneralSecurityException | MalformedCryptoElementException ex) {}
-			Calendar timestamp = SimpleTimestampPattern.getCreationTime(np);
+			Calendar timestamp = null;
+			try {
+				timestamp = SimpleTimestampPattern.getCreationTime(np);
+			} catch (IllegalArgumentException ex) {
+				System.err.println("Illegal date/time for nanopublication " + np.getUri());
+			}
 			if (timestamp != null) {
 				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral(getDayString(timestamp), XMLSchema.DATE), ADMIN_GRAPH));
 				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral(getMonthString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
 				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral(getYearString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
+			} else {
+				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral("NONE"), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral("NONE"), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral("NONE"), ADMIN_GRAPH));
+			}
+			if (containsNullCharacter) {
+				st.add(vf.createStatement(np.getUri(), NOTE, vf.createLiteral("contained NULL character"), ADMIN_GRAPH));
 			}
 			conn.add(st);
-		} catch (MalformedNanopubException e) {
-			e.printStackTrace();
+		} catch (MalformedNanopubException ex) {
+			ex.printStackTrace();
 		}
 	}
 
@@ -81,6 +99,7 @@ public class NanopubModule {
 	public static final IRI CREATION_DAY = vf.createIRI("http://purl.org/nanopub/admin/creationDay");
 	public static final IRI CREATION_MONTH = vf.createIRI("http://purl.org/nanopub/admin/creationMonth");
 	public static final IRI CREATION_YEAR = vf.createIRI("http://purl.org/nanopub/admin/creationYear");
+	public static final IRI NOTE = vf.createIRI("http://purl.org/nanopub/admin/note");
 	public static final IRI HAS_VALID_SIGNATURE_FOR_PUBLIC_KEY = vf.createIRI("http://purl.org/nanopub/admin/hasValidSignatureForPublicKey");
 
 }
