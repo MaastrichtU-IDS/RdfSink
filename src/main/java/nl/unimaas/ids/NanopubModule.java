@@ -32,16 +32,17 @@ public class NanopubModule {
 
 	public static void process(RepositoryConnection conn, String payload, RDFFormat format) throws RDF4JException {
 		try {
+			Nanopub np = new NanopubImpl(payload, format);
+			Nanopub npToLoad = np;
 			boolean containsNullCharacter = false;
 			if (payload.contains("\0")) {
 				// Work-around because null characters cause problems
 				containsNullCharacter = true;
-				payload = payload.replaceAll("\0", "");
+				npToLoad = new NanopubImpl(payload.replaceAll("\0", ""), format);
 			}
-			Nanopub np = new NanopubImpl(payload, format);
 			// TODO: check that nanopub doesn't use admin namespace
 			List<Statement> st = new ArrayList<>();
-			st.addAll(NanopubUtils.getStatements(np));
+			st.addAll(NanopubUtils.getStatements(npToLoad));
 			st.add(vf.createStatement(np.getUri(), HAS_HEAD_GRAPH, np.getHeadUri(), ADMIN_GRAPH));
 			try {
 				NanopubSignatureElement el = SignatureUtils.getSignatureElement(np);
