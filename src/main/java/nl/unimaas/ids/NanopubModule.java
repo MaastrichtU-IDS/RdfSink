@@ -59,7 +59,7 @@ public class NanopubModule {
 			if (timestamp != null) {
 				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral(getDayString(timestamp), XMLSchema.DATE), ADMIN_GRAPH));
 				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral(getMonthString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral(getYearString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral(getYearString(timestamp), XMLSchema.GYEAR), ADMIN_GRAPH));
 			} else {
 				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral("NONE"), ADMIN_GRAPH));
 				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral("NONE"), ADMIN_GRAPH));
