@@ -13,7 +13,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.nanopub.MalformedNanopubException;
@@ -57,13 +56,13 @@ public class NanopubModule {
 				System.err.println("Illegal date/time for nanopublication " + np.getUri());
 			}
 			if (timestamp != null) {
-				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral(getDayString(timestamp), XMLSchema.DATE), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral(getMonthString(timestamp), XMLSchema.GYEARMONTH), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral(getYearString(timestamp), XMLSchema.GYEAR), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createIRI(NPA_DATE_PREFIX + getDayString(timestamp)), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createIRI(NPA_DATE_PREFIX + getMonthString(timestamp)), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createIRI(NPA_DATE_PREFIX + getYearString(timestamp)), ADMIN_GRAPH));
 			} else {
-				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createLiteral("NONE"), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createLiteral("NONE"), ADMIN_GRAPH));
-				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createLiteral("NONE"), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_DAY, vf.createIRI(NPA_DATE_PREFIX + "NONE"), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_MONTH, vf.createIRI(NPA_DATE_PREFIX + "NONE"), ADMIN_GRAPH));
+				st.add(vf.createStatement(np.getUri(), CREATION_YEAR, vf.createIRI(NPA_DATE_PREFIX + "NONE"), ADMIN_GRAPH));
 			}
 			if (containsNullCharacter) {
 				st.add(vf.createStatement(np.getUri(), NOTE, vf.createLiteral("contained NULL character"), ADMIN_GRAPH));
@@ -95,6 +94,7 @@ public class NanopubModule {
 	private static TimeZone timeZone = TimeZone.getTimeZone("UTC");
 	private static ValueFactory vf = SimpleValueFactory.getInstance();
 
+	public static final String NPA_DATE_PREFIX = "http://purl.org/nanopub/admin/date/";
 	public static final IRI ADMIN_GRAPH = vf.createIRI("http://purl.org/nanopub/admin/graph");
 	public static final IRI HAS_HEAD_GRAPH = vf.createIRI("http://purl.org/nanopub/admin/hasHeadGraph");
 	public static final IRI CREATION_DAY = vf.createIRI("http://purl.org/nanopub/admin/creationDay");
