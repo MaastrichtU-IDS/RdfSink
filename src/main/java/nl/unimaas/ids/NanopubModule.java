@@ -55,21 +55,22 @@ public class NanopubModule {
 			Set<IRI> otherNps = new HashSet<>();
 			for (Statement st : NanopubUtils.getStatements(npToLoad)) {
 				statements.add(st);
+				if (st.getPredicate().toString().contains(ac)) {
+					subIris.add(st.getPredicate());
+				} else {
+					IRI b = getBaseTrustyUri(st.getPredicate());
+					if (b != null) otherNps.add(b);
+				}
 				if (st.getSubject().equals(np.getUri()) && st.getObject() instanceof IRI) {
 					if (st.getObject().toString().matches(".*[^A-Za-z0-9\\-_]RA[A-Za-z0-9\\-_]{43}")) {
 						statements.add(vf.createStatement(np.getUri(), st.getPredicate(), st.getObject(), ADMIN_NETWORK_GRAPH));
+						continue;
 					}
 				}
 				if (st.getSubject().toString().contains(ac)) {
 					subIris.add((IRI) st.getSubject());
 				} else {
 					IRI b = getBaseTrustyUri(st.getSubject());
-					if (b != null) otherNps.add(b);
-				}
-				if (st.getPredicate().toString().contains(ac)) {
-					subIris.add(st.getPredicate());
-				} else {
-					IRI b = getBaseTrustyUri(st.getPredicate());
 					if (b != null) otherNps.add(b);
 				}
 				if (st.getObject() instanceof IRI) {
@@ -89,7 +90,7 @@ public class NanopubModule {
 				statements.add(vf.createStatement(np.getUri(), HAS_SUB_IRI, i, ADMIN_GRAPH));
 			}
 			for (IRI i : otherNps) {
-				statements.add(vf.createStatement(np.getUri(), REFERS_TO_NANOPUB, i, ADMIN_GRAPH));
+				statements.add(vf.createStatement(np.getUri(), REFERS_TO_NANOPUB, i, ADMIN_NETWORK_GRAPH));
 			}
 			statements.add(vf.createStatement(np.getUri(), HAS_HEAD_GRAPH, np.getHeadUri(), ADMIN_GRAPH));
 			try {
