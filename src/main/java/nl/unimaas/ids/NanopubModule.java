@@ -118,6 +118,10 @@ public class NanopubModule {
 			if (containsNullCharacter) {
 				statements.add(vf.createStatement(np.getUri(), NOTE, vf.createLiteral("contained NULL character"), ADMIN_GRAPH));
 			}
+			while (statements.size() > 1000) {
+				conn.add(statements.subList(0, 1000));
+				statements = statements.subList(1000, statements.size());
+			}
 			conn.add(statements);
 		} catch (MalformedNanopubException ex) {
 			ex.printStackTrace();
@@ -145,10 +149,10 @@ public class NanopubModule {
 	private static IRI getBaseTrustyUri(Value v) {
 		if (!(v instanceof IRI)) return null;
 		String s = v.stringValue();
-		if (!s.matches(".*[^A-Za-z0-9\\-_]RA[A-Za-z0-9\\-_]{43}([^A-Za-z0-9\\\\-_][A-Za-z0-9\\-_\\.]{0,43})?")) {
+		if (!s.matches(".*[^A-Za-z0-9\\-_]RA[A-Za-z0-9\\-_]{43}([^A-Za-z0-9\\\\-_].{0,43})?")) {
 			return null;
 		}
-		return vf.createIRI(s.replaceFirst("^(.*[^A-Za-z0-9\\-_]RA[A-Za-z0-9\\-_]{43})([^A-Za-z0-9\\\\-_][A-Za-z0-9\\-_\\.]{0,43})?$", "$1"));
+		return vf.createIRI(s.replaceFirst("^(.*[^A-Za-z0-9\\-_]RA[A-Za-z0-9\\-_]{43})([^A-Za-z0-9\\\\-_].{0,43})?$", "$1"));
 	}
 
 	private static TimeZone timeZone = TimeZone.getTimeZone("UTC");
