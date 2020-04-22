@@ -2,6 +2,7 @@ package nl.unimaas.ids;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -45,6 +46,11 @@ class SparqlEndpointThread extends Thread {
 
 	@Override
 	public void run() {
+		try {
+			init();
+		} catch (RDF4JException | IOException ex) {
+			ex.printStackTrace();
+		}
 		while(!terminated) {
 			try {
 				if (!queue.isEmpty()) {
@@ -74,6 +80,21 @@ class SparqlEndpointThread extends Thread {
 		SPARQLRepository repo = getRepository();
 		if(repo != null && repo.isInitialized()) {
 			repo.shutDown();
+		}
+	}
+
+	private void init() throws RDF4JException, IOException {
+		// Wait a bit to make sure endpoint is ready:
+		try {
+			TimeUnit.SECONDS.sleep(60);
+		} catch (InterruptedException ex) {}
+		RepositoryConnection conn = getRepository().getConnection();
+		try {
+			if (module.equals("nanopub")) {
+				NanopubModule.init(conn);
+			}
+		} finally {
+			conn.close();
 		}
 	}
 

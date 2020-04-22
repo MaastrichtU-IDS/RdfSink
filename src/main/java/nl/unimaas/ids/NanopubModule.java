@@ -26,6 +26,7 @@ import org.nanopub.SimpleTimestampPattern;
 import org.nanopub.extra.security.MalformedCryptoElementException;
 import org.nanopub.extra.security.NanopubSignatureElement;
 import org.nanopub.extra.security.SignatureUtils;
+import org.nanopub.extra.server.GetNanopub;
 
 import net.trustyuri.TrustyUriUtils;
 
@@ -34,13 +35,44 @@ public class NanopubModule {
 	// no instances allowed
 	private NanopubModule() {}
 
+	public static void init(RepositoryConnection conn) throws RDF4JException {
+		IRI hasHeadGraph = vf.createIRI("http://purl.org/nanopub/admin/hasHeadGraph");
+
+		IRI npIri = vf.createIRI("http://purl.org/np/RA1mIYfZVfP-dlhVX4-E1f_a8WD60rOzxQrMl1dGgG5xE");
+		IRI fixed1 = vf.createIRI("http://purl.org/nanopub/admin/fixed-1");
+		// Virtuoso doesn't like ASK queries, and getStatements queries without variables seem to be translated to ASK queries too:
+		if (conn.getStatements(npIri, hasHeadGraph, null, false, ADMIN_GRAPH).hasNext()) {
+			//if (!conn.getStatements(npIri, NOTE, fixed1, false, ADMIN_GRAPH).hasNext()) {
+			if (!conn.getStatements(npIri, null, fixed1, false, ADMIN_GRAPH).hasNext()) {
+				System.err.println("Applying fix 1: " + npIri.stringValue());
+				Nanopub np = GetNanopub.get(npIri.stringValue());
+				conn.clear(np.getAssertionUri());
+				conn.add(np.getAssertion(), np.getAssertionUri());
+				try {
+					NanopubSignatureElement el = SignatureUtils.getSignatureElement(np);
+					conn.add(vf.createStatement(npIri, HAS_VALID_SIGNATURE_FOR_PUBLIC_KEY, vf.createLiteral(el.getPublicKeyString())), ADMIN_GRAPH);
+					conn.add(vf.createStatement(npIri, NOTE, fixed1), ADMIN_GRAPH);
+					System.err.println("Fix 1 applied: " + npIri.stringValue());
+				} catch (MalformedCryptoElementException ex) {
+					ex.printStackTrace();
+				}
+			} else {
+				System.err.println("Fix 1 already applied.");
+			}
+		} else {
+			System.err.println("Nanopub for fix 1 not loaded: " + npIri.stringValue());
+		}
+	}
+
 	public static void process(RepositoryConnection conn, String payload, RDFFormat format) throws RDF4JException {
 		try {
 			Nanopub np = new NanopubImpl(payload, format);
 			Nanopub npToLoad = np;
 			boolean containsNullCharacter = false;
 			if (payload.contains("\0")) {
-				// Work-around because null characters cause problems
+				// Work-around because null characters cause problems.
+				// This breaks signatures of these nanopublications, so they won't be recognized as valid (but
+				// luckily there are currently no such nanopubs).
 				containsNullCharacter = true;
 				npToLoad = new NanopubImpl(payload.replaceAll("\0", ""), format);
 			}

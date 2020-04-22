@@ -71,7 +71,7 @@ public class RdfSink {
 				req.setExpectMultipart(true);
 				final StringBuilder payload = new StringBuilder();
 				req.handler(data -> {
-					payload.append(data.toString());
+					payload.append(data.toString("UTF-8"));
 				});
 
 				req.endHandler(handler -> {
