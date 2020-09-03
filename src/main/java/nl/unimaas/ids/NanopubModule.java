@@ -125,6 +125,11 @@ public class NanopubModule {
 				statements.add(vf.createStatement(np.getUri(), REFERS_TO_NANOPUB, i, ADMIN_NETWORK_GRAPH));
 			}
 			statements.add(vf.createStatement(np.getUri(), HAS_HEAD_GRAPH, np.getHeadUri(), ADMIN_GRAPH));
+
+			statements.add(vf.createStatement(np.getUri(), Nanopub.HAS_ASSERTION_URI, np.getAssertionUri(), ADMIN_HEADS_GRAPH));
+			statements.add(vf.createStatement(np.getUri(), Nanopub.HAS_PROVENANCE_URI, np.getProvenanceUri(), ADMIN_HEADS_GRAPH));
+			statements.add(vf.createStatement(np.getUri(), Nanopub.HAS_PUBINFO_URI, np.getPubinfoUri(), ADMIN_HEADS_GRAPH));
+
 			try {
 				NanopubSignatureElement el = SignatureUtils.getSignatureElement(np);
 				if (el != null && SignatureUtils.hasValidSignature(el) && el.getPublicKeyString() != null) {
@@ -194,6 +199,7 @@ public class NanopubModule {
 	public static final String NPA_DATE_PREFIX = "http://purl.org/nanopub/admin/date/";
 	public static final IRI ADMIN_GRAPH = vf.createIRI("http://purl.org/nanopub/admin/graph");
 	public static final IRI ADMIN_NETWORK_GRAPH = vf.createIRI("http://purl.org/nanopub/admin/networkGraph");
+	public static final IRI ADMIN_HEADS_GRAPH = vf.createIRI("http://purl.org/nanopub/admin/headsGraph");
 	public static final IRI HAS_HEAD_GRAPH = vf.createIRI("http://purl.org/nanopub/admin/hasHeadGraph");
 	public static final IRI CREATION_DAY = vf.createIRI("http://purl.org/nanopub/admin/creationDay");
 	public static final IRI CREATION_MONTH = vf.createIRI("http://purl.org/nanopub/admin/creationMonth");
