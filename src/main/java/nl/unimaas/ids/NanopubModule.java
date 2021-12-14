@@ -64,7 +64,7 @@ public class NanopubModule {
 		}
 	}
 
-	public static void process(RepositoryConnection conn, String payload, RDFFormat format) throws RDF4JException {
+	public static void process(RepositoryConnection conn, String payload, RDFFormat format, boolean signedOnly) throws RDF4JException {
 		try {
 			Nanopub np = new NanopubImpl(payload, format);
 			Nanopub npToLoad = np;
@@ -83,6 +83,15 @@ public class NanopubModule {
 				conn.add(vf.createStatement(np.getUri(), NOTE, vf.createLiteral("could not load nanopub as not all graphs contained the artifact code"), ADMIN_GRAPH));
 				return;
 			}
+
+			NanopubSignatureElement el = null;
+			try {
+				el = SignatureUtils.getSignatureElement(np);
+			} catch (MalformedCryptoElementException ex) {}
+			if (signedOnly && !hasValidSignature(el)) {
+				return;
+			}
+
 			Set<IRI> subIris = new HashSet<>();
 			Set<IRI> otherNps = new HashSet<>();
 			for (Statement st : NanopubUtils.getStatements(npToLoad)) {
@@ -130,12 +139,9 @@ public class NanopubModule {
 //			statements.add(vf.createStatement(np.getUri(), Nanopub.HAS_PROVENANCE_URI, np.getProvenanceUri(), ADMIN_HEADS_GRAPH));
 //			statements.add(vf.createStatement(np.getUri(), Nanopub.HAS_PUBINFO_URI, np.getPubinfoUri(), ADMIN_HEADS_GRAPH));
 
-			try {
-				NanopubSignatureElement el = SignatureUtils.getSignatureElement(np);
-				if (el != null && SignatureUtils.hasValidSignature(el) && el.getPublicKeyString() != null) {
-					statements.add(vf.createStatement(np.getUri(), HAS_VALID_SIGNATURE_FOR_PUBLIC_KEY, vf.createLiteral(el.getPublicKeyString()), ADMIN_GRAPH));
-				}
-			} catch (GeneralSecurityException | MalformedCryptoElementException ex) {}
+			if (hasValidSignature(el)) {
+				statements.add(vf.createStatement(np.getUri(), HAS_VALID_SIGNATURE_FOR_PUBLIC_KEY, vf.createLiteral(el.getPublicKeyString()), ADMIN_GRAPH));
+			}
 			Calendar timestamp = null;
 			try {
 				timestamp = SimpleTimestampPattern.getCreationTime(np);
@@ -164,6 +170,15 @@ public class NanopubModule {
 		} catch (MalformedNanopubException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	private static boolean hasValidSignature(NanopubSignatureElement el) {
+		try {
+			if (el != null && SignatureUtils.hasValidSignature(el) && el.getPublicKeyString() != null) {
+				return true;
+			}
+		} catch (GeneralSecurityException ex) {}
+		return false;
 	}
 
 	private static String getDayString(Calendar c) {

@@ -90,7 +90,7 @@ class SparqlEndpointThread extends Thread {
 		} catch (InterruptedException ex) {}
 		RepositoryConnection conn = getRepository().getConnection();
 		try {
-			if (module.equals("nanopub")) {
+			if (module.equals("nanopub") || module.equals("nanopub-signed")) {
 				NanopubModule.init(conn);
 			}
 		} finally {
@@ -102,7 +102,9 @@ class SparqlEndpointThread extends Thread {
 		RepositoryConnection conn = getRepository().getConnection();
 		try {
 			if (module.equals("nanopub")) {
-				NanopubModule.process(conn, payload, format);
+				NanopubModule.process(conn, payload, format, false);
+			} else if (module.equals("nanopub-signed")) {
+				NanopubModule.process(conn, payload, format, true);
 			} else {
 				conn.add(new StringReader(payload), "http://null/", format);
 			}
