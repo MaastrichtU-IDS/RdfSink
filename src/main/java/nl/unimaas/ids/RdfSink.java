@@ -2,9 +2,7 @@ package nl.unimaas.ids;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
 
-import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.rio.Rio;
 
@@ -20,6 +18,8 @@ public class RdfSink {
 	static final String UPDATE_ENDPOINT_KEY = "UPDATE_ENDPOINT";
 	static final String USERNAME_KEY = "USERNAME";
 	static final String PASSWORD_KEY = "PASSWORD";
+	static final String MODULE_KEY = "MODULE";
+	static final String REPOTYPE_KEY = "REPO_TYPE";
 
 	public static void main(String[] args) {
 		try {
@@ -31,20 +31,11 @@ public class RdfSink {
 	}
 
 	private void run() throws IOException {
-		Map<String, String> env = EnvironmentUtils.getProcEnvironment();
-		final String endpoint = env.get(ENDPOINT_KEY);
-		final String updateEndpoint = env.get(UPDATE_ENDPOINT_KEY);
-		final String username = env.get(USERNAME_KEY);
-		final String password = env.get(PASSWORD_KEY);
-
-		if(endpoint == null || endpoint.isEmpty())
-			throw new IllegalArgumentException();
-
 		Vertx vertx = new VertxFactoryImpl().vertx();
 		HttpServer httpServer = vertx.createHttpServer();
 
-		final Queue queue = new Queue("/data/", "nanopubs", 1000);
-		SparqlEndpointThread rdfwriter = new SparqlEndpointThread(queue, endpoint, updateEndpoint, username, password);
+		final Queue queue = new Queue("/data/", "rdfsink queue", 1000);
+		SparqlEndpointThread rdfwriter = new SparqlEndpointThread(queue);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
@@ -69,7 +60,7 @@ public class RdfSink {
 				req.setExpectMultipart(true);
 				final StringBuilder payload = new StringBuilder();
 				req.handler(data -> {
-					payload.append(data.toString());
+					payload.append(data.toString("UTF-8"));
 				});
 
 				req.endHandler(handler -> {
