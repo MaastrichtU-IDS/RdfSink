@@ -71,6 +71,9 @@ class SparqlEndpointThread extends Thread {
 			try {
 				if (!queue.isEmpty()) {
 					String queueEntry = queue.poll();
+					// Not sure how this can happen, but at least once it was experienced that queueEntry was null and then
+					// this thread crashed, and that's why we have this additional check here:
+					if (queueEntry == null) continue;
 
 					JsonArray arr = Json.parse(queueEntry).asArray();
 					String contentType = arr.get(0).asString();
@@ -86,9 +89,10 @@ class SparqlEndpointThread extends Thread {
 						sleep(5000);
 					}
 
-				} else
+				} else {
 					// nothing to do, let's wait a second
 					sleep(1000);
+				}
 			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
