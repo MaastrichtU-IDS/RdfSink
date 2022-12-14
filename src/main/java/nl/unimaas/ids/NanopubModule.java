@@ -87,7 +87,10 @@ public class NanopubModule {
 			NanopubSignatureElement el = null;
 			try {
 				el = SignatureUtils.getSignatureElement(np);
-			} catch (MalformedCryptoElementException ex) {}
+			} catch (MalformedCryptoElementException ex) {
+				System.err.println("Signature error for " + np.getUri());
+				ex.printStackTrace();
+			}
 			if (signedOnly && !hasValidSignature(el)) {
 				return;
 			}
@@ -177,7 +180,10 @@ public class NanopubModule {
 			if (el != null && SignatureUtils.hasValidSignature(el) && el.getPublicKeyString() != null) {
 				return true;
 			}
-		} catch (GeneralSecurityException ex) {}
+		} catch (GeneralSecurityException ex) {
+			System.err.println("Error for signature element " + el.getUri());
+			ex.printStackTrace();
+		}
 		return false;
 	}
 
